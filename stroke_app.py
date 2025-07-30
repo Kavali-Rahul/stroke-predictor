@@ -16,8 +16,8 @@ df = pd.read_csv("stroke_data.csv")
 
 # Title
 st.set_page_config(page_title="Stroke Risk Predictor", layout="wide")
-st.title("🧠 Stroke Risk Prediction Web App")
-st.write("Predict stroke risk and compare your health with the population.")
+st.title("🧠 Stroke Risk Predictor")
+st.write("Predict's stroke risk and compare your health with the population.")
 
 # Sidebar input
 st.sidebar.header("Enter Patient Information")
