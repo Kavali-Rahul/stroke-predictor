@@ -1,2 +1,1 @@
-best_model = models["RandomForest"]
-best_threshold = 0.13
+0.41
