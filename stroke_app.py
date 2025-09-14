@@ -106,4 +106,4 @@ if st.button("🔍 Predict Stroke Risk"):
 
 # ---------------------- Footer ----------------------
 st.markdown("---")
-st.markdown("👨‍💻 Developed by Rahul")
+st.markdown("👨‍💻 Developed by Rahul and Rakesh")
