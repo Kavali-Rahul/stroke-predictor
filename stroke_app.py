@@ -5,13 +5,13 @@ import joblib
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# ---------------------- Load model and features ----------------------
-model = joblib.load("saved_model/stroke_rf_model.pkl")
-top_features = joblib.load("saved_model/feature_columns.pkl")
+# ---------------------- Load model and preprocessing ----------------------
+model = joblib.load("saved_model/best_stroke_model.pkl")
+preprocessor = joblib.load("preprocessor.pkl")  # save your preprocessor
 with open("saved_model/best_threshold.txt", "r") as f:
     threshold = float(f.read())
 
-# Load original dataset for visualization
+# Load dataset for visualization
 df = pd.read_csv("stroke_data.csv")
 df['bmi'].fillna(df['bmi'].mean(), inplace=True)
 
@@ -28,43 +28,41 @@ hypertension = st.sidebar.selectbox("Hypertension", ["No", "Yes"])
 heart_disease = st.sidebar.selectbox("Heart Disease", ["No", "Yes"])
 ever_married = st.sidebar.selectbox("Ever Married", ["No", "Yes"])
 work_type = st.sidebar.selectbox("Work Type", ["Private", "Self-employed", "Govt_job", "children", "Never_worked"])
-Residence_type = st.sidebar.selectbox("Residence Type", ["Urban", "Rural"])
+residence_type = st.sidebar.selectbox("Residence Type", ["Urban", "Rural"])
 avg_glucose_level = st.sidebar.slider("Average Glucose Level", 50.0, 300.0, 100.0)
 bmi = st.sidebar.slider("BMI", 10.0, 50.0, 25.0)
 smoking_status = st.sidebar.selectbox("Smoking Status", ["formerly smoked", "never smoked", "smokes", "Unknown"])
 
-# ---------------------- Encode input ----------------------
-input_dict = {
+# ---------------------- Prepare input DataFrame ----------------------
+input_raw = pd.DataFrame([{
     "age": age,
-    "avg_glucose_level": avg_glucose_level,
-    "bmi": bmi,
     "hypertension": 1 if hypertension=="Yes" else 0,
     "heart_disease": 1 if heart_disease=="Yes" else 0,
-}
+    "avg_glucose_level": avg_glucose_level,
+    "bmi": bmi,
+    "gender": gender,
+    "ever_married": ever_married,
+    "work_type": work_type,
+    "Residence_type": residence_type,
+    "smoking_status": smoking_status
+}])
 
-# Add categorical one-hot encoding
-for col in top_features:
-    if col.startswith("gender_"):
-        input_dict[col] = 1 if col=="gender_"+gender else 0
-    elif col.startswith("ever_married_"):
-        input_dict[col] = 1 if col=="ever_married_"+ever_married else 0
-    elif col.startswith("work_type_"):
-        input_dict[col] = 1 if col=="work_type_"+work_type else 0
-    elif col.startswith("Residence_type_"):
-        input_dict[col] = 1 if col=="Residence_type_"+Residence_type else 0
-    elif col.startswith("smoking_status_"):
-        input_dict[col] = 1 if col=="smoking_status_"+smoking_status else 0
+# ---------------------- Fill missing columns for preprocessor ----------------------
+for col in preprocessor.feature_names_in_:
+    if col not in input_raw.columns:
+        input_raw[col] = 0  # Fill missing categorical columns with 0
 
-input_df = pd.DataFrame([input_dict])
-input_df = input_df[top_features]  # ensure correct column order
+input_raw = input_raw[preprocessor.feature_names_in_]  # Ensure correct column order
 
-# ---------------------- Prediction ----------------------
+# ---------------------- Predict when button clicked ----------------------
 if st.button("🔍 Predict Stroke Risk"):
-    prob = model.predict_proba(input_df)[0][1]
+    input_preprocessed = preprocessor.transform(input_raw)
+    
+    prob = model.predict_proba(input_preprocessed)[0][1]
     prediction = int(prob >= threshold)
 
     st.subheader("Prediction Result")
-    if prediction==1:
+    if prediction == 1:
         st.error(f"⚠ High risk of stroke! (Probability: {prob:.2f})")
     else:
         st.success(f"✅ Low risk of stroke. (Probability: {prob:.2f})")
@@ -72,25 +70,22 @@ if st.button("🔍 Predict Stroke Risk"):
     # ---------------------- Visualizations ----------------------
     st.markdown("### Your Health vs Population Distribution")
     numeric_features = ["age", "bmi", "avg_glucose_level"]
-
     col1, col2 = st.columns(2)
-    
-    # First column: age & bmi
+
     with col1:
         for feature in ["age","bmi"]:
             fig, ax = plt.subplots()
             sns.kdeplot(df[feature], fill=True, ax=ax, color="skyblue", label="Population")
-            ax.axvline(input_dict[feature], color="orange", linestyle="--", linewidth=2, label="You")
+            ax.axvline(input_raw[feature][0], color="orange", linestyle="--", linewidth=2, label="You")
             ax.set_title(f"{feature.replace('_',' ').title()} Distribution")
             ax.legend()
             st.pyplot(fig)
 
-    # Second column: glucose
     with col2:
         feature = "avg_glucose_level"
         fig, ax = plt.subplots()
         sns.kdeplot(df[feature], fill=True, ax=ax, color="skyblue", label="Population")
-        ax.axvline(input_dict[feature], color="orange", linestyle="--", linewidth=2, label="You")
+        ax.axvline(input_raw[feature][0], color="orange", linestyle="--", linewidth=2, label="You")
         ax.set_title(f"{feature.replace('_',' ').title()} Distribution")
         ax.legend()
         st.pyplot(fig)
@@ -107,3 +102,4 @@ if st.button("🔍 Predict Stroke Risk"):
 # ---------------------- Footer ----------------------
 st.markdown("---")
 st.markdown("👨‍💻 Developed by Rahul and Rakesh")
+
