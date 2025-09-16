@@ -142,3 +142,16 @@ results_df["Avg_Acc_Recall"] = (results_df["Accuracy"] + results_df["Recall"]) /
 best_model = results_df.loc[results_df["Avg_Acc_Recall"].idxmax()]
 print("\nBest Model (by Avg Accuracy & Recall):")
 print(best_model)
+
+import joblib
+
+# Save the best model
+best_model_name = best_model["Model"]
+best_model_object = models[best_model_name]  # get the trained model object
+joblib.dump(best_model_object, "best_stroke_model.pkl")
+print(f"Saved the best model ({best_model_name}) as 'best_stroke_model.pkl'")
+
+# Save the preprocessor
+joblib.dump(preprocessor, "saved_model/preprocessor.pkl")
+print("Saved the preprocessor as 'preprocessor.pkl'")
+

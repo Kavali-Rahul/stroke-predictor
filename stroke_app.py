@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 # ---------------------- Load model and preprocessing ----------------------
 model = joblib.load("saved_model/best_stroke_model.pkl")
-preprocessor = joblib.load("preprocessor.pkl")  # save your preprocessor
+preprocessor = joblib.load("saved_model/preprocessor.pkl")  # save your preprocessor
 threshold = 0.5  # Hardcoded threshold
 
 # Load dataset for visualization
