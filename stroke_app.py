@@ -7,7 +7,24 @@ import matplotlib.pyplot as plt
 
 # ---------------------- Load model and preprocessing ----------------------
 model = joblib.load("saved_model/best_stroke_model.pkl")
-preprocessor = joblib.load("preprocessor.pkl")  # save your preprocessor
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+# Define which columns are categorical and numerical
+categorical_cols = ["gender", "ever_married", "work_type", "Residence_type", "smoking_status"]
+numeric_cols = ["age", "hypertension", "heart_disease", "avg_glucose_level", "bmi"]
+
+# Rebuild preprocessor
+preprocessor = ColumnTransformer([
+    ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_cols),
+    ("num", StandardScaler(), numeric_cols)
+])
+
+# Fit it on stroke_data.csv (same columns you used in training)
+df = pd.read_csv("stroke_data.csv")
+df["bmi"].fillna(df["bmi"].mean(), inplace=True)
+X = df[categorical_cols + numeric_cols]
+preprocessor.fit(X)
 with open("saved_model/best_threshold.txt", "r") as f:
     threshold = float(f.read())
 
@@ -102,4 +119,3 @@ if st.button("🔍 Predict Stroke Risk"):
 # ---------------------- Footer ----------------------
 st.markdown("---")
 st.markdown("👨‍💻 Developed by Rahul and Rakesh")
-
